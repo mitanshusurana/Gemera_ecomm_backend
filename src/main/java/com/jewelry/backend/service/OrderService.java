@@ -44,8 +44,8 @@ public class OrderService {
         order.setUser(user);
         order.setTotal(cart.getTotal());
         order.setStatus("PENDING_PAYMENT");
-        order.setShippingAddress(request.getShippingAddress());
-        order.setBillingAddress(request.getBillingAddress());
+        order.setShippingAddress(String.valueOf(request.getShippingAddress()));
+        order.setBillingAddress(String.valueOf(request.getBillingAddress()));
         order.setPaymentMethod(request.getPaymentMethod());
         order.setShippingMethod(request.getShippingMethod());
 
