@@ -11,18 +11,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductRepository extends JpaRepository<Product, UUID> {
-
-    @Query("SELECT p FROM Product p WHERE " +
-           "(:category IS NULL OR p.category = :category) AND " +
-           "(:priceMin IS NULL OR p.price >= :priceMin) AND " +
-           "(:priceMax IS NULL OR p.price <= :priceMax) AND " +
-           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Product> findWithFilters(
-            @Param("category") String category,
-            @Param("priceMin") BigDecimal priceMin,
-            @Param("priceMax") BigDecimal priceMax,
-            @Param("search") String search,
-            Pageable pageable);
+  @Query("SELECT p FROM Product p WHERE " +
+    "(:category IS NULL OR p.category = :category) AND " +
+    "(:priceMin IS NULL OR p.price >= :priceMin) AND " +
+    "(:priceMax IS NULL OR p.price <= :priceMax) AND " +
+    "(:search IS NULL OR " +
+    "LOWER(CAST(p.name AS text)) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%')) OR " +
+    "LOWER(CAST(p.description AS text)) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%')))")
+  Page<Product> findWithFilters(
+    @Param("category") String category,
+    @Param("priceMin") BigDecimal priceMin,
+    @Param("priceMax") BigDecimal priceMax,
+    @Param("search") String search,
+    Pageable pageable);
 
     @Query("SELECT DISTINCT p.category FROM Product p")
     List<String> findAllCategories();
