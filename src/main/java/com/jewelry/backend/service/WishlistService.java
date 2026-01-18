@@ -25,7 +25,7 @@ public class WishlistService {
 
     public Wishlist getWishlist(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        return wishlistRepository.findByUserId(user.getId())
+        return wishlistRepository.findByUser(user)
                 .orElseGet(() -> {
                     Wishlist newWishlist = new Wishlist();
                     newWishlist.setUser(user);

@@ -24,7 +24,7 @@ public class TreasurePlanService {
 
     public TreasurePlanResponse getAccount(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        TreasurePlan plan = treasurePlanRepository.findByUserIdAndStatus(user.getId(), "ACTIVE")
+        TreasurePlan plan = treasurePlanRepository.findByUserAndStatus(user, "ACTIVE")
                 .orElseThrow(() -> new RuntimeException("No active plan found"));
         return mapToResponse(plan);
     }
@@ -33,18 +33,14 @@ public class TreasurePlanService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if already has active plan
-        if (treasurePlanRepository.findByUserIdAndStatus(user.getId(), "ACTIVE").isPresent()) {
+        if (treasurePlanRepository.findByUserAndStatus(user, "ACTIVE").isPresent()) {
             throw new RuntimeException("User already has an active plan");
         }
 
         TreasurePlan plan = new TreasurePlan();
         plan.setUser(user);
         plan.setPlanName(request.getPlanName());
-        plan.setBalance(BigDecimal.ZERO); // Initial balance is 0 until first payment? Or does enroll include payment?
-        // The requirements say Enroll response has status ACTIVE and startDate.
-        // Assuming first payment happens separately or this is just enrollment.
-        // Logic says "installmentAmount" in request. Maybe it charges the first one.
-        // For now, I'll just set it up.
+        plan.setBalance(BigDecimal.ZERO); // Initial balance
         plan.setInstallmentsPaid(0);
         plan.setTotalInstallments(12); // Default
         plan.setStatus("ACTIVE");

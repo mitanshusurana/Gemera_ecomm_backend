@@ -29,7 +29,8 @@ public class ProductService {
 
     public Page<ProductResponse> getAllProducts(String category, BigDecimal priceMin, BigDecimal priceMax, String search, String occasions, String styles, Pageable pageable) {
         // Prepare search term for LIKE query
-        String searchTerm = search != null ? "%" + search + "%" : null;
+        // Ensure it is lowercase here to avoid LOWER(:search) in JPQL
+        String searchTerm = search != null ? "%" + search.toLowerCase() + "%" : null;
 
         Page<Product> products = productRepository.findWithFilters(category, priceMin, priceMax, searchTerm, pageable);
         return products.map(this::mapToResponse);
@@ -38,17 +39,6 @@ public class ProductService {
     public ProductDetailResponse getProductById(UUID id) {
         Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
         return mapToDetailResponse(product);
-    }
-
-    // Returning the Category Tree structure
-    public Map<String, List<CategoryResponse>> getCategories() {
-        // The controller expects Map<String, List<String>> in the old code, but requirements say:
-        // { "categories": [ ... ] }
-        // So I will change the Controller to return the proper JSON structure.
-        // This method will return the list of root categories.
-        // But wait, the method signature in interface/controller might need change.
-        // I will change this to return List<CategoryResponse>.
-        return null; // Not used directly, I'll create a new method.
     }
 
     public List<CategoryResponse> getCategoryTree() {
@@ -141,5 +131,10 @@ public class ProductService {
                     .collect(Collectors.toList()));
         }
         return response;
+    }
+
+    // Kept for backward compatibility if needed, though unused now
+    public Map<String, List<CategoryResponse>> getCategories() {
+        return null;
     }
 }

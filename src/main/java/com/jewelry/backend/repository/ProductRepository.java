@@ -19,8 +19,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             "(:priceMin IS NULL OR p.price >= :priceMin) AND " +
             "(:priceMax IS NULL OR p.price <= :priceMax) AND " +
             "(:search IS NULL OR " +
-            "LOWER(p.name) LIKE LOWER(:search) OR " +
-            "LOWER(p.description) LIKE LOWER(:search))")
+            "LOWER(p.name) LIKE :search OR " +
+            "LOWER(p.description) LIKE :search)")
     Page<Product> findWithFilters(
             @Param("category") String category,
             @Param("priceMin") BigDecimal priceMin,

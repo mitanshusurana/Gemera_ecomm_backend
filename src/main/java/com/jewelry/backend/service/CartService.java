@@ -73,6 +73,10 @@ public class CartService {
 
     @Transactional
     public CartResponse updateItemQuantity(String userEmail, UUID itemId, int quantity) {
+        if (quantity <= 0) {
+            return removeItem(userEmail, itemId);
+        }
+
         Cart cart = getCartEntity(userEmail);
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
@@ -81,13 +85,8 @@ public class CartService {
              throw new RuntimeException("Item does not belong to user cart");
         }
 
-        if (quantity <= 0) {
-            cart.getItems().remove(item);
-            cartItemRepository.delete(item);
-        } else {
-            item.setQuantity(quantity);
-            cartItemRepository.save(item);
-        }
+        item.setQuantity(quantity);
+        cartItemRepository.save(item);
 
         recalculateCart(cart);
         cart = cartRepository.save(cart);
@@ -96,27 +95,41 @@ public class CartService {
 
     @Transactional
     public CartResponse removeItem(String userEmail, UUID itemId) {
-        return updateItemQuantity(userEmail, itemId, 0);
+        Cart cart = getCartEntity(userEmail);
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        if (!item.getCart().getId().equals(cart.getId())) {
+             throw new RuntimeException("Item does not belong to user cart");
+        }
+
+        cart.getItems().remove(item);
+        cartItemRepository.delete(item);
+
+        recalculateCart(cart);
+        cart = cartRepository.save(cart);
+        return mapToResponse(cart, userEmail);
     }
 
     @Transactional
     public CartResponse applyCoupon(String userEmail, String code) {
         Cart cart = getCartEntity(userEmail);
-        // Simple mock logic
+        BigDecimal discount = BigDecimal.ZERO;
+
         if ("SAVE20".equals(code)) {
             // Calculate 20% discount on subtotal
-            BigDecimal discount = cart.getSubtotal().multiply(new BigDecimal("0.20"));
-            // We don't have a discount field in Entity to persist this for session?
-            // The Cart entity has `subtotal`, `tax`, `shipping`, `total`.
-            // I should probably add `discount` to Cart entity if I want to persist it.
-            // For now, I'll just return it in response recalculation if persisted.
-            // Let's assume we persist it.
+            discount = cart.getSubtotal().multiply(new BigDecimal("0.20"));
         }
-        // Since I didn't add discount to Cart Entity, I'll skip persisting logic and just return.
-        // But the requirement says "Response ... discount: 9000".
-        // I'll skip complex coupon logic for now as it requires Entity change not in plan (except I said "Update Cart Logic").
-        // I'll leave it as is, maybe just recalculate in `mapToResponse` if I had a way to store the coupon code.
-        return mapToResponse(cart, userEmail);
+
+        CartResponse response = mapToResponse(cart, userEmail);
+
+        // Temporarily apply discount to response since we aren't persisting it
+        if (discount.compareTo(BigDecimal.ZERO) > 0) {
+            response.setAppliedDiscount(discount);
+            response.setTotal(response.getTotal().subtract(discount));
+        }
+
+        return response;
     }
 
     @Transactional
@@ -156,7 +169,7 @@ public class CartService {
         response.setTax(cart.getTax());
         response.setShipping(cart.getShipping());
         response.setTotal(cart.getTotal());
-        response.setAppliedDiscount(BigDecimal.ZERO); // Placeholder
+        response.setAppliedDiscount(BigDecimal.ZERO); // Default
 
         response.setItems(cart.getItems().stream().map(item -> {
             CartResponse.CartItemResponse itemResp = new CartResponse.CartItemResponse();

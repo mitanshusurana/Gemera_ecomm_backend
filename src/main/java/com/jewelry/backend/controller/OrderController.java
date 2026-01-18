@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.Map;
@@ -41,10 +42,10 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> updateStatus(
             @PathVariable UUID orderId,
             @RequestBody Map<String, String> body) {
-        // In real app, check for ADMIN role here
         return ResponseEntity.ok(orderService.updateStatus(orderId, body.get("status"), body.get("trackingNumber")));
     }
 }
