@@ -1,6 +1,5 @@
 package com.jewelry.backend.dto;
 
-import com.jewelry.backend.entity.CartItem;
 import lombok.Data;
 import java.util.UUID;
 
@@ -8,5 +7,17 @@ import java.util.UUID;
 public class AddToCartRequest {
     private UUID productId;
     private int quantity;
-    private CartItem.CartItemOptions options;
+    private RequestOptions options;
+
+    @Data
+    public static class RequestOptions {
+        private OptionDetail metal;
+        private OptionDetail diamond;
+        private String engraving;
+    }
+
+    @Data
+    public static class OptionDetail {
+        private String name;
+    }
 }

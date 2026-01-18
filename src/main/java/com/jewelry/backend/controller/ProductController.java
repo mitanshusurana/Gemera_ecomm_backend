@@ -1,5 +1,7 @@
 package com.jewelry.backend.controller;
 
+import com.jewelry.backend.dto.ProductDetailResponse;
+import com.jewelry.backend.dto.ProductResponse;
 import com.jewelry.backend.entity.Product;
 import com.jewelry.backend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,7 +24,7 @@ public class ProductController {
     ProductService productService;
 
     @GetMapping
-    public ResponseEntity<Page<Product>> getAllProducts(
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) BigDecimal priceMin,
             @RequestParam(required = false) BigDecimal priceMax,
@@ -34,23 +36,25 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable UUID id) {
+    public ResponseEntity<ProductDetailResponse> getProductById(@PathVariable UUID id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<Map<String, List<String>>> getCategories() {
-        return ResponseEntity.ok(productService.getCategories());
+    public ResponseEntity<Map<String, Object>> getCategories() {
+        return ResponseEntity.ok(Collections.singletonMap("categories", productService.getCategoryTree()));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<Product>> searchProducts(
+    public ResponseEntity<Map<String, Object>> searchProducts(
             @RequestParam String query,
             Pageable pageable) {
-        return ResponseEntity.ok(productService.getAllProducts(null, null, null, query, null, null, pageable));
+        Page<ProductResponse> results = productService.getAllProducts(null, null, null, query, null, null, pageable);
+        return ResponseEntity.ok(Collections.singletonMap("results", results.getContent()));
     }
 
-    // Helper to seed data
+    // Helper to seed data - accepting generic Product for now, though it might fail if JSON doesn't match exactly Entity
+    // This endpoint was in original code, keeping it for utility
     @PostMapping
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         return ResponseEntity.status(201).body(productService.createProduct(product));
