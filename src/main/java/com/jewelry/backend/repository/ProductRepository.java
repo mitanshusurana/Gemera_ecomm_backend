@@ -14,13 +14,23 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
-    @Query("SELECT p FROM Product p LEFT JOIN p.category c WHERE " +
-            "(:category IS NULL OR c.name = :category OR c.parent.name = :category) AND " +
+    @Query(value = "SELECT p.* FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN categories c_parent ON c.parent_id = c_parent.id " +
+            "WHERE " +
+            "(:category IS NULL OR c.name = :category OR c_parent.name = :category) AND " +
             "(:priceMin IS NULL OR p.price >= :priceMin) AND " +
             "(:priceMax IS NULL OR p.price <= :priceMax) AND " +
-            "(:search IS NULL OR " +
-            "LOWER(p.name) LIKE :search OR " +
-            "LOWER(p.description) LIKE :search)")
+            "(:search IS NULL OR p.name ILIKE :search OR p.description ILIKE :search)",
+            countQuery = "SELECT count(*) FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN categories c_parent ON c.parent_id = c_parent.id " +
+            "WHERE " +
+            "(:category IS NULL OR c.name = :category OR c_parent.name = :category) AND " +
+            "(:priceMin IS NULL OR p.price >= :priceMin) AND " +
+            "(:priceMax IS NULL OR p.price <= :priceMax) AND " +
+            "(:search IS NULL OR p.name ILIKE :search OR p.description ILIKE :search)",
+            nativeQuery = true)
     Page<Product> findWithFilters(
             @Param("category") String category,
             @Param("priceMin") BigDecimal priceMin,
