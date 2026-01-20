@@ -1,12 +1,14 @@
 package com.jewelry.backend.entity;
 
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "products")
@@ -21,4 +23,18 @@ public class Product extends BaseEntity {
 
     @ElementCollection
     private List<String> images;
+
+    @ElementCollection
+    private Map<String, String> specifications;
+
+    @ElementCollection
+    private List<CustomizationOption> customizationOptions;
+
+    @Embeddable
+    @Data
+    public static class CustomizationOption {
+        private String type; // e.g. "METAL", "SIZE"
+        private String name; // e.g. "Gold", "6"
+        private BigDecimal priceModifier;
+    }
 }

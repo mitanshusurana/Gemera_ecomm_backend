@@ -1,5 +1,7 @@
 package com.jewelry.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jewelry.backend.dto.CreateOrderRequest;
 import com.jewelry.backend.entity.*;
 import com.jewelry.backend.repository.CartRepository;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +34,9 @@ public class OrderService {
     @Autowired
     CartService cartService;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     @Transactional
     public Order createOrder(String userEmail, CreateOrderRequest request) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
@@ -44,10 +50,25 @@ public class OrderService {
         order.setUser(user);
         order.setTotal(cart.getTotal());
         order.setStatus("PENDING_PAYMENT");
-        order.setShippingAddress(String.valueOf(request.getShippingAddress()));
-        order.setBillingAddress(String.valueOf(request.getBillingAddress()));
+
+        try {
+            order.setShippingAddress(objectMapper.writeValueAsString(request.getShippingAddress()));
+            order.setBillingAddress(objectMapper.writeValueAsString(request.getBillingAddress()));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing address", e);
+        }
+
         order.setPaymentMethod(request.getPaymentMethod());
         order.setShippingMethod(request.getShippingMethod());
+        order.setEstimatedDelivery(LocalDate.now().plusDays(7)); // Mock estimated delivery
+
+        if (request.getPaymentDetails() != null) {
+            order.setRazorpayOrderId(request.getPaymentDetails().getRazorpay_order_id());
+            order.setRazorpayPaymentId(request.getPaymentDetails().getRazorpay_payment_id());
+            order.setRazorpaySignature(request.getPaymentDetails().getRazorpay_signature());
+            // Assume payment is successful if details are provided (for now)
+            order.setStatus("PAID");
+        }
 
         Order savedOrder = orderRepository.save(order);
 
@@ -66,6 +87,10 @@ public class OrderService {
         cart.getItems().clear();
         cart.setSubtotal(java.math.BigDecimal.ZERO);
         cart.setTotal(java.math.BigDecimal.ZERO);
+        cart.setDiscount(java.math.BigDecimal.ZERO);
+        cart.setTax(java.math.BigDecimal.ZERO);
+        cart.setShipping(java.math.BigDecimal.ZERO);
+        cart.setAppliedCoupon(null);
         cartRepository.save(cart);
 
         return savedOrder;
@@ -77,6 +102,12 @@ public class OrderService {
     }
 
     public Order getOrder(UUID orderId) {
-        return orderRepository.findById(orderId).orElseThrow();
+        return orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    public Order updateStatus(UUID orderId, String status) {
+        Order order = getOrder(orderId);
+        order.setStatus(status);
+        return orderRepository.save(order);
     }
 }
