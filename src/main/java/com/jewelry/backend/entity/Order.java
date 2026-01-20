@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,10 +23,19 @@ public class Order extends BaseEntity {
 
     private BigDecimal total;
     private String status; // PENDING_PAYMENT, PAID, SHIPPED, etc.
+    private LocalDate estimatedDelivery;
 
-    // Address fields could be simplified for now
+    // Address fields stored as JSON string or simplified
+    @Column(columnDefinition = "TEXT")
     private String shippingAddress;
+    @Column(columnDefinition = "TEXT")
     private String billingAddress;
+
     private String paymentMethod;
     private String shippingMethod;
+
+    // Payment details reference
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String razorpaySignature;
 }

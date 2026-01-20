@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -48,8 +47,6 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // For simplicity in this demo, always add new item if options are present or not matching exactly.
-        // In a real scenario, we'd compare options deeply.
         CartItem newItem = new CartItem();
         newItem.setCart(cart);
         newItem.setProduct(product);
@@ -57,7 +54,7 @@ public class CartService {
         newItem.setOptions(request.getOptions());
 
         cart.getItems().add(newItem);
-        cartItemRepository.save(newItem); // Cascade might handle this but safer to save
+        cartItemRepository.save(newItem);
 
         recalculateCart(cart);
         return cartRepository.save(cart);
@@ -98,6 +95,22 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
+    @Transactional
+    public Cart applyCoupon(String userEmail, String code) {
+        Cart cart = getCart(userEmail);
+        if ("DISCOUNT10".equalsIgnoreCase(code)) {
+            cart.setAppliedCoupon(code);
+        } else {
+             if (code == null || code.isEmpty()) {
+                 cart.setAppliedCoupon(null);
+             } else {
+                 throw new RuntimeException("Invalid coupon code");
+             }
+        }
+        recalculateCart(cart);
+        return cartRepository.save(cart);
+    }
+
     private void recalculateCart(Cart cart) {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem item : cart.getItems()) {
@@ -105,10 +118,20 @@ public class CartService {
             subtotal = subtotal.add(itemTotal);
         }
         cart.setSubtotal(subtotal);
-        cart.setTax(subtotal.multiply(new BigDecimal("0.10"))); // 10% tax
+
+        BigDecimal discount = BigDecimal.ZERO;
+        if ("DISCOUNT10".equalsIgnoreCase(cart.getAppliedCoupon())) {
+             discount = subtotal.multiply(new BigDecimal("0.10"));
+        }
+        cart.setDiscount(discount);
+
+        BigDecimal taxableAmount = subtotal.subtract(discount);
+        if (taxableAmount.compareTo(BigDecimal.ZERO) < 0) taxableAmount = BigDecimal.ZERO;
+        cart.setTax(taxableAmount.multiply(new BigDecimal("0.10")));
+
         cart.setShipping(subtotal.compareTo(new BigDecimal("1000")) > 0 ? BigDecimal.ZERO : new BigDecimal("50"));
 
-        BigDecimal total = cart.getSubtotal().add(cart.getTax()).add(cart.getShipping());
+        BigDecimal total = cart.getSubtotal().subtract(cart.getDiscount()).add(cart.getTax()).add(cart.getShipping());
         if (cart.isGiftWrap()) {
             total = total.add(new BigDecimal("5"));
         }

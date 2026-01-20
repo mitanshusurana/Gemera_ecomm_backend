@@ -28,6 +28,8 @@ public class Cart extends BaseEntity {
     private BigDecimal tax = BigDecimal.ZERO;
     private BigDecimal shipping = BigDecimal.ZERO;
     private BigDecimal total = BigDecimal.ZERO;
+    private BigDecimal discount = BigDecimal.ZERO;
+    private String appliedCoupon;
 
     private boolean giftWrap;
 }

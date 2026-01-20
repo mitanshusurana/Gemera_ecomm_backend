@@ -62,4 +62,14 @@ public class AuthService {
         User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
         return new AuthResponse(jwt, user);
     }
+
+    public AuthResponse refreshToken(String refreshToken) {
+        if (jwtUtils.validateJwtToken(refreshToken)) {
+            String email = jwtUtils.getUserNameFromJwtToken(refreshToken);
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            String newToken = jwtUtils.generateTokenFromEmail(email);
+            return new AuthResponse(newToken, user);
+        }
+        throw new RuntimeException("Invalid Refresh Token");
+    }
 }
