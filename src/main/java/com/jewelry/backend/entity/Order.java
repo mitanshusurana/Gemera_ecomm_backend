@@ -24,6 +24,7 @@ public class Order extends BaseEntity {
     private BigDecimal total;
     private String status; // PENDING_PAYMENT, PAID, SHIPPED, etc.
     private LocalDate estimatedDelivery;
+    private String trackingNumber;
 
     // Address fields stored as JSON string or simplified
     @Column(columnDefinition = "TEXT")

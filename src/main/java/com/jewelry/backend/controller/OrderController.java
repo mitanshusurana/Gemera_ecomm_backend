@@ -1,17 +1,17 @@
 package com.jewelry.backend.controller;
 
 import com.jewelry.backend.dto.CreateOrderRequest;
+import com.jewelry.backend.dto.OrderTracking;
 import com.jewelry.backend.entity.Order;
 import com.jewelry.backend.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,9 +35,7 @@ public class OrderController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int size,
             Principal principal) {
-        // Wrap list in Page for now
-        List<Order> orders = orderService.getUserOrders(principal.getName());
-        return ResponseEntity.ok(new PageImpl<>(orders));
+        return ResponseEntity.ok(orderService.getUserOrders(principal.getName(), PageRequest.of(page, size)));
     }
 
     @GetMapping("/{orderId}")
@@ -48,13 +46,13 @@ public class OrderController {
 
     @GetMapping("/track/{id}")
     @Operation(summary = "Track order (Public)")
-    public ResponseEntity<Order> trackOrder(@PathVariable UUID id) {
-        return ResponseEntity.ok(orderService.getOrder(id));
+    public ResponseEntity<OrderTracking> trackOrder(@PathVariable UUID id) {
+        return ResponseEntity.ok(orderService.trackOrder(id));
     }
 
     @PutMapping("/{id}/status")
     @Operation(summary = "Update status (Admin)")
     public ResponseEntity<Order> updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(orderService.updateStatus(id, body.get("status")));
+        return ResponseEntity.ok(orderService.updateStatus(id, body.get("status"), body.get("trackingNumber")));
     }
 }

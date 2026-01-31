@@ -2,6 +2,7 @@ package com.jewelry.backend.controller;
 
 import com.jewelry.backend.dto.AddToCartRequest;
 import com.jewelry.backend.dto.ApplyCouponRequest;
+import com.jewelry.backend.dto.CartOptionsRequest;
 import com.jewelry.backend.entity.Cart;
 import com.jewelry.backend.service.CartService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,5 +53,11 @@ public class CartController {
     @Operation(summary = "Apply discount code")
     public ResponseEntity<Cart> applyCoupon(@RequestBody ApplyCouponRequest request, Principal principal) {
         return ResponseEntity.ok(cartService.applyCoupon(principal.getName(), request.getCode()));
+    }
+
+    @PostMapping("/options")
+    @Operation(summary = "Update cart options (e.g. Gift Wrap)")
+    public ResponseEntity<Cart> updateOptions(@RequestBody CartOptionsRequest request, Principal principal) {
+        return ResponseEntity.ok(cartService.updateCartOptions(principal.getName(), request.isGiftWrap()));
     }
 }

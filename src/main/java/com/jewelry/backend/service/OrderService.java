@@ -3,12 +3,15 @@ package com.jewelry.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jewelry.backend.dto.CreateOrderRequest;
+import com.jewelry.backend.dto.OrderTracking;
 import com.jewelry.backend.entity.*;
 import com.jewelry.backend.repository.CartRepository;
 import com.jewelry.backend.repository.OrderItemRepository;
 import com.jewelry.backend.repository.OrderRepository;
 import com.jewelry.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,18 +99,32 @@ public class OrderService {
         return savedOrder;
     }
 
-    public List<Order> getUserOrders(String userEmail) {
+    public Page<Order> getUserOrders(String userEmail, Pageable pageable) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
-        return orderRepository.findByUser(user);
+        return orderRepository.findByUser(user, pageable);
     }
 
     public Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    public Order updateStatus(UUID orderId, String status) {
+    public OrderTracking trackOrder(UUID orderId) {
+        Order order = getOrder(orderId);
+        OrderTracking tracking = new OrderTracking();
+        tracking.setOrderId(order.getId().toString());
+        tracking.setStatus(order.getStatus());
+        tracking.setEstimatedDelivery(order.getEstimatedDelivery());
+        tracking.setTrackingNumber(order.getTrackingNumber());
+        tracking.setHistory(List.of("Order Placed", "Payment Confirmed", "Processing")); // Mock history
+        return tracking;
+    }
+
+    public Order updateStatus(UUID orderId, String status, String trackingNumber) {
         Order order = getOrder(orderId);
         order.setStatus(status);
+        if (trackingNumber != null) {
+            order.setTrackingNumber(trackingNumber);
+        }
         return orderRepository.save(order);
     }
 }
