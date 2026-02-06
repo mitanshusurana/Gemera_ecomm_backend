@@ -1,8 +1,6 @@
 package com.jewelry.backend.controller;
 
-import com.jewelry.backend.dto.CreateRazorpayOrderRequest;
-import com.jewelry.backend.dto.RazorpayOrderResponse;
-import com.jewelry.backend.dto.TransactionFailureRequest;
+import com.jewelry.backend.dto.*;
 import com.jewelry.backend.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,5 +28,17 @@ public class PaymentController {
     public ResponseEntity<Void> logTransactionFailure(@RequestBody TransactionFailureRequest request) {
         paymentService.logFailure(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/payments/initialize")
+    @Operation(summary = "Initialize Generic Payment")
+    public ResponseEntity<Object> initializePayment(@RequestBody InitializePaymentRequest request) {
+        return ResponseEntity.ok(paymentService.initializePayment(request));
+    }
+
+    @PostMapping("/payments/verify")
+    @Operation(summary = "Verify Payment")
+    public ResponseEntity<Object> verifyPayment(@RequestBody VerifyPaymentRequest request) {
+        return ResponseEntity.ok(paymentService.verifyPayment(request));
     }
 }

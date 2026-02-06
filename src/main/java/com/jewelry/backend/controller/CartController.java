@@ -60,4 +60,16 @@ public class CartController {
     public ResponseEntity<Cart> updateOptions(@RequestBody CartOptionsRequest request, Principal principal) {
         return ResponseEntity.ok(cartService.updateCartOptions(principal.getName(), request.isGiftWrap()));
     }
+
+    @PostMapping("/wishlist")
+    @Operation(summary = "Add item to wishlist")
+    public ResponseEntity<Cart> addToWishlist(@RequestBody Map<String, String> body, Principal principal) {
+        return ResponseEntity.ok(cartService.addToWishlist(principal.getName(), UUID.fromString(body.get("productId"))));
+    }
+
+    @DeleteMapping("/wishlist/{productId}")
+    @Operation(summary = "Remove item from wishlist")
+    public ResponseEntity<Cart> removeFromWishlist(@PathVariable UUID productId, Principal principal) {
+        return ResponseEntity.ok(cartService.removeFromWishlist(principal.getName(), productId));
+    }
 }

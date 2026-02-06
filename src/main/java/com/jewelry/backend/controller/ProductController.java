@@ -1,6 +1,7 @@
 package com.jewelry.backend.controller;
 
 import com.jewelry.backend.dto.CategoryResponse;
+import com.jewelry.backend.dto.DeliveryAvailability;
 import com.jewelry.backend.entity.Product;
 import com.jewelry.backend.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,8 +35,16 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal priceMin,
             @RequestParam(required = false) BigDecimal priceMax,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> occasions,
+            @RequestParam(required = false) List<String> styles,
             @Parameter(hidden = true) Pageable pageable) {
-        return ResponseEntity.ok(productService.getAllProducts(category, priceMin, priceMax, search, pageable));
+        return ResponseEntity.ok(productService.getAllProducts(category, priceMin, priceMax, search, occasions, styles, pageable));
+    }
+
+    @GetMapping("/delivery-availability")
+    @Operation(summary = "Check delivery availability")
+    public ResponseEntity<DeliveryAvailability> checkDelivery(@RequestParam String pincode) {
+        return ResponseEntity.ok(productService.checkDeliveryAvailability(pincode));
     }
 
     @GetMapping("/{id}")
@@ -55,7 +64,7 @@ public class ProductController {
     public ResponseEntity<Map<String, List<Product>>> searchProducts(
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int limit) {
-        Page<Product> page = productService.getAllProducts(null, null, null, query, PageRequest.of(0, limit));
+        Page<Product> page = productService.getAllProducts(null, null, null, query, null, null, PageRequest.of(0, limit));
         return ResponseEntity.ok(Map.of("results", page.getContent()));
     }
 

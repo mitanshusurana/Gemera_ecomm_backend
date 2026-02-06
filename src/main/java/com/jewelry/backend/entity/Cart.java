@@ -6,6 +6,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
@@ -32,4 +33,7 @@ public class Cart extends BaseEntity {
     private String appliedCoupon;
 
     private boolean giftWrap;
+
+    @Transient
+    private List<Product> wishlist;
 }
