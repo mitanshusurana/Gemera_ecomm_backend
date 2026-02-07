@@ -5,15 +5,14 @@ import com.jewelry.backend.entity.Cart;
 import com.jewelry.backend.entity.CartItem;
 import com.jewelry.backend.entity.Product;
 import com.jewelry.backend.entity.User;
-import com.jewelry.backend.repository.CartItemRepository;
-import com.jewelry.backend.repository.CartRepository;
-import com.jewelry.backend.repository.ProductRepository;
-import com.jewelry.backend.repository.UserRepository;
+import com.jewelry.backend.repository.*;
+import com.jewelry.backend.entity.Wishlist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.UUID;
 
 @Service
@@ -31,14 +30,25 @@ public class CartService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    WishlistRepository wishlistRepository;
+
     @Transactional
     public Cart getCart(String userEmail) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
-        return cartRepository.findByUser(user).orElseGet(() -> {
+        Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
             Cart newCart = new Cart();
             newCart.setUser(user);
             return cartRepository.save(newCart);
         });
+
+        // Populate wishlist
+        wishlistRepository.findByUser(user).ifPresentOrElse(
+            w -> cart.setWishlist(w.getProducts()),
+            () -> cart.setWishlist(Collections.emptyList())
+        );
+
+        return cart;
     }
 
     @Transactional
@@ -58,6 +68,42 @@ public class CartService {
 
         recalculateCart(cart);
         return cartRepository.save(cart);
+    }
+
+    @Transactional
+    public Cart addToWishlist(String userEmail, UUID productId) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Wishlist wishlist = wishlistRepository.findByUser(user)
+                .orElseGet(() -> {
+                    Wishlist w = new Wishlist();
+                    w.setUser(user);
+                    return wishlistRepository.save(w);
+                });
+
+        if (!wishlist.getProducts().contains(product)) {
+            wishlist.getProducts().add(product);
+            wishlistRepository.save(wishlist);
+        }
+
+        return getCart(userEmail);
+    }
+
+    @Transactional
+    public Cart removeFromWishlist(String userEmail, UUID productId) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        wishlistRepository.findByUser(user).ifPresent(wishlist -> {
+            if (wishlist.getProducts().remove(product)) {
+                wishlistRepository.save(wishlist);
+            }
+        });
+
+        return getCart(userEmail);
     }
 
     @Transactional

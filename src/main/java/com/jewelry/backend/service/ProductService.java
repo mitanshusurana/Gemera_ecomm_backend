@@ -1,6 +1,7 @@
 package com.jewelry.backend.service;
 
 import com.jewelry.backend.dto.CategoryResponse;
+import com.jewelry.backend.dto.DeliveryAvailability;
 import com.jewelry.backend.entity.Category;
 import com.jewelry.backend.entity.Product;
 import com.jewelry.backend.repository.CategoryRepository;
@@ -29,9 +30,20 @@ public class ProductService {
             BigDecimal priceMin,
             BigDecimal priceMax,
             String search,
+            List<String> occasions,
+            List<String> styles,
             Pageable pageable) {
 
-        return productRepository.findWithFilters(category, priceMin, priceMax, search, pageable);
+        return productRepository.findWithFilters(category, priceMin, priceMax, search, occasions, styles, pageable);
+    }
+
+    public DeliveryAvailability checkDeliveryAvailability(String pincode) {
+        // Simple logic: allow if pincode is not null/empty
+        if (pincode == null || pincode.length() < 6) {
+             return new DeliveryAvailability(false, null, "Invalid Pincode");
+        }
+        // Mock availability
+        return new DeliveryAvailability(true, "2023-12-31", "Delivery available in 3-5 days");
     }
 
     public Product getProductById(UUID id) {

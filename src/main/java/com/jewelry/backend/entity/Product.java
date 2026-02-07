@@ -30,6 +30,12 @@ public class Product extends BaseEntity {
     @ElementCollection
     private List<CustomizationOption> customizationOptions;
 
+    @ElementCollection
+    private List<String> occasions;
+
+    @ElementCollection
+    private List<String> styles;
+
     @Embeddable
     @Data
     public static class CustomizationOption {
