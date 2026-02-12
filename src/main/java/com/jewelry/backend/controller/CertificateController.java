@@ -1,6 +1,7 @@
 package com.jewelry.backend.controller;
 
-import com.jewelry.backend.entity.Certificate;
+import com.jewelry.backend.dto.CertificateDetailDTO;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.service.CertificateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +20,13 @@ public class CertificateController {
     @Autowired
     private CertificateService certificateService;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     @GetMapping("/{reportNumber}")
     @Operation(summary = "Verify certificate")
-    public ResponseEntity<Certificate> verifyCertificate(@PathVariable String reportNumber) {
-        return ResponseEntity.ok(certificateService.getCertificate(reportNumber));
+    public ResponseEntity<CertificateDetailDTO> verifyCertificate(@PathVariable String reportNumber) {
+        return ResponseEntity.ok(entityMapper.toCertificateDetailDTO(certificateService.getCertificate(reportNumber)));
     }
 
     @GetMapping("/{reportNumber}/download")

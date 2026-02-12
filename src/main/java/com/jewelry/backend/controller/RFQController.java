@@ -1,8 +1,11 @@
 package com.jewelry.backend.controller;
 
 import com.jewelry.backend.dto.NegotiationRequestDTO;
+import com.jewelry.backend.dto.RFQRequestDTO;
+import com.jewelry.backend.dto.RFQQuoteDTO;
 import com.jewelry.backend.entity.RFQ;
 import com.jewelry.backend.entity.RFQQuote;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.service.RFQService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,38 +30,44 @@ public class RFQController {
     @Autowired
     RFQService rfqService;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     @PostMapping("/requests")
     @Operation(summary = "Create RFQ")
-    public ResponseEntity<RFQ> createRequest(@RequestBody RFQ rfq, Principal principal) {
-        return ResponseEntity.status(201).body(rfqService.createRequest(principal.getName(), rfq));
+    public ResponseEntity<RFQRequestDTO> createRequest(@RequestBody RFQRequestDTO request, Principal principal) {
+        RFQ rfq = entityMapper.toRFQEntity(request);
+        RFQ created = rfqService.createRequest(principal.getName(), rfq);
+        return ResponseEntity.status(201).body(entityMapper.toRFQRequestDTO(created));
     }
 
     @GetMapping("/requests/{id}")
     @Operation(summary = "Get RFQ details")
-    public ResponseEntity<RFQ> getRequest(@PathVariable UUID id) {
-        return ResponseEntity.ok(rfqService.getRequest(id));
+    public ResponseEntity<RFQRequestDTO> getRequest(@PathVariable UUID id) {
+        return ResponseEntity.ok(entityMapper.toRFQRequestDTO(rfqService.getRequest(id)));
     }
 
     @GetMapping("/requests/number/{rfqNumber}")
     @Operation(summary = "Get RFQ by Number")
-    public ResponseEntity<RFQ> getRequestByNumber(@PathVariable String rfqNumber) {
-        return ResponseEntity.ok(rfqService.getRequestByNumber(rfqNumber));
+    public ResponseEntity<RFQRequestDTO> getRequestByNumber(@PathVariable String rfqNumber) {
+        return ResponseEntity.ok(entityMapper.toRFQRequestDTO(rfqService.getRequestByNumber(rfqNumber)));
     }
 
     @GetMapping("/requests/user/{userId}")
     @Operation(summary = "Get User Requests")
-    public ResponseEntity<Page<RFQ>> getUserRequests(
+    public ResponseEntity<Page<RFQRequestDTO>> getUserRequests(
             @PathVariable UUID userId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(rfqService.getUserRequests(userId, status, PageRequest.of(page, size)));
+        Page<RFQ> requests = rfqService.getUserRequests(userId, status, PageRequest.of(page, size));
+        return ResponseEntity.ok(requests.map(entityMapper::toRFQRequestDTO));
     }
 
     @PutMapping("/requests/{id}")
     @Operation(summary = "Update RFQ")
-    public ResponseEntity<RFQ> updateRequest(@PathVariable UUID id, @RequestBody Map<String, Object> updates) {
-        return ResponseEntity.ok(rfqService.updateRequest(id, updates));
+    public ResponseEntity<RFQRequestDTO> updateRequest(@PathVariable UUID id, @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.ok(entityMapper.toRFQRequestDTO(rfqService.updateRequest(id, updates)));
     }
 
     @PostMapping("/requests/{id}/cancel")
@@ -70,17 +79,18 @@ public class RFQController {
 
     @GetMapping("/requests/{id}/quote")
     @Operation(summary = "Get Latest Quote")
-    public ResponseEntity<RFQQuote> getLatestQuote(@PathVariable UUID id) {
-        return ResponseEntity.ok(rfqService.getLatestQuote(id));
+    public ResponseEntity<RFQQuoteDTO> getLatestQuote(@PathVariable UUID id) {
+        return ResponseEntity.ok(entityMapper.toRFQQuoteDTO(rfqService.getLatestQuote(id)));
     }
 
     @GetMapping("/requests/{id}/quotes")
     @Operation(summary = "Get All Quotes for RFQ")
-    public ResponseEntity<Page<RFQQuote>> getAllQuotes(
+    public ResponseEntity<Page<RFQQuoteDTO>> getAllQuotes(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(rfqService.getAllQuotes(id, PageRequest.of(page, size)));
+        Page<RFQQuote> quotes = rfqService.getAllQuotes(id, PageRequest.of(page, size));
+        return ResponseEntity.ok(quotes.map(entityMapper::toRFQQuoteDTO));
     }
 
     @GetMapping("/requests/{id}/quote/pdf")

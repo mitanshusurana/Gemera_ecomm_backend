@@ -1,8 +1,10 @@
 package com.jewelry.backend.controller;
 
 import com.jewelry.backend.dto.CreateOrderRequest;
+import com.jewelry.backend.dto.OrderDTO;
 import com.jewelry.backend.dto.OrderTracking;
 import com.jewelry.backend.entity.Order;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,25 +25,30 @@ public class OrderController {
     @Autowired
     OrderService orderService;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     @PostMapping
     @Operation(summary = "Create new order")
-    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request, Principal principal) {
-        return ResponseEntity.status(201).body(orderService.createOrder(principal.getName(), request));
+    public ResponseEntity<OrderDTO> createOrder(@RequestBody CreateOrderRequest request, Principal principal) {
+        Order order = orderService.createOrder(principal.getName(), request);
+        return ResponseEntity.status(201).body(entityMapper.toOrderDTO(order));
     }
 
     @GetMapping
     @Operation(summary = "Get user orders")
-    public ResponseEntity<Page<Order>> getOrders(
+    public ResponseEntity<Page<OrderDTO>> getOrders(
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int size,
             Principal principal) {
-        return ResponseEntity.ok(orderService.getUserOrders(principal.getName(), PageRequest.of(page, size)));
+        Page<Order> orders = orderService.getUserOrders(principal.getName(), PageRequest.of(page, size));
+        return ResponseEntity.ok(orders.map(entityMapper::toOrderDTO));
     }
 
     @GetMapping("/{orderId}")
     @Operation(summary = "Get order details")
-    public ResponseEntity<Order> getOrder(@PathVariable UUID orderId) {
-        return ResponseEntity.ok(orderService.getOrder(orderId));
+    public ResponseEntity<OrderDTO> getOrder(@PathVariable UUID orderId) {
+        return ResponseEntity.ok(entityMapper.toOrderDTO(orderService.getOrder(orderId)));
     }
 
     @GetMapping("/track/{id}")
@@ -52,7 +59,8 @@ public class OrderController {
 
     @PutMapping("/{id}/status")
     @Operation(summary = "Update status (Admin)")
-    public ResponseEntity<Order> updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(orderService.updateStatus(id, body.get("status"), body.get("trackingNumber")));
+    public ResponseEntity<OrderDTO> updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        Order order = orderService.updateStatus(id, body.get("status"), body.get("trackingNumber"));
+        return ResponseEntity.ok(entityMapper.toOrderDTO(order));
     }
 }

@@ -4,6 +4,7 @@ import com.jewelry.backend.dto.CategoryResponse;
 import com.jewelry.backend.dto.DeliveryAvailability;
 import com.jewelry.backend.entity.Category;
 import com.jewelry.backend.entity.Product;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.repository.CategoryRepository;
 import com.jewelry.backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class ProductService {
 
     @Autowired
     CategoryRepository categoryRepository;
+
+    @Autowired
+    EntityMapper entityMapper;
 
     public Page<Product> getAllProducts(
             String category,
@@ -56,7 +60,7 @@ public class ProductService {
         List<Category> roots = allCategories.stream()
                 .filter(c -> c.getParent() == null)
                 .collect(Collectors.toList());
-        return new CategoryResponse(roots);
+        return new CategoryResponse(roots.stream().map(entityMapper::toCategoryDTO).collect(Collectors.toList()));
     }
 
     // Admin only - strictly for seeding/testing

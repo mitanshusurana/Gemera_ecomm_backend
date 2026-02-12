@@ -1,7 +1,10 @@
 package com.jewelry.backend.controller;
 
+import com.jewelry.backend.dto.AddressDTO;
+import com.jewelry.backend.dto.UserDTO;
 import com.jewelry.backend.entity.Address;
 import com.jewelry.backend.entity.User;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.repository.UserRepository;
 import com.jewelry.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,16 +26,21 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
-    public ResponseEntity<User> getMe(Principal principal) {
-        return ResponseEntity.ok(userRepository.findByEmail(principal.getName()).orElseThrow());
+    public ResponseEntity<UserDTO> getMe(Principal principal) {
+        User user = userRepository.findByEmail(principal.getName()).orElseThrow();
+        return ResponseEntity.ok(entityMapper.toUserDTO(user));
     }
 
     @PutMapping("/profile")
     @Operation(summary = "Update user profile")
-    public ResponseEntity<User> updateProfile(@RequestBody Map<String, Object> updates, Principal principal) {
-        return ResponseEntity.ok(userService.updateUserProfile(principal.getName(), updates));
+    public ResponseEntity<UserDTO> updateProfile(@RequestBody Map<String, Object> updates, Principal principal) {
+        User user = userService.updateUserProfile(principal.getName(), updates);
+        return ResponseEntity.ok(entityMapper.toUserDTO(user));
     }
 
     @GetMapping("/loyalty")
@@ -43,22 +51,26 @@ public class UserController {
 
     @PostMapping("/addresses")
     @Operation(summary = "Add address")
-    public ResponseEntity<User> addAddress(@RequestBody Address address, Principal principal) {
-        return ResponseEntity.ok(userService.addAddress(principal.getName(), address));
+    public ResponseEntity<UserDTO> addAddress(@RequestBody AddressDTO addressDTO, Principal principal) {
+        Address address = entityMapper.toAddressEntity(addressDTO);
+        User user = userService.addAddress(principal.getName(), address);
+        return ResponseEntity.ok(entityMapper.toUserDTO(user));
     }
 
     @PutMapping("/addresses/{id}")
     @Operation(summary = "Update address")
-    public ResponseEntity<User> updateAddress(
+    public ResponseEntity<UserDTO> updateAddress(
             @PathVariable UUID id,
             @RequestBody Map<String, Object> updates,
             Principal principal) {
-        return ResponseEntity.ok(userService.updateAddress(principal.getName(), id, updates));
+        User user = userService.updateAddress(principal.getName(), id, updates);
+        return ResponseEntity.ok(entityMapper.toUserDTO(user));
     }
 
     @DeleteMapping("/addresses/{id}")
     @Operation(summary = "Delete address")
-    public ResponseEntity<User> deleteAddress(@PathVariable UUID id, Principal principal) {
-        return ResponseEntity.ok(userService.deleteAddress(principal.getName(), id));
+    public ResponseEntity<UserDTO> deleteAddress(@PathVariable UUID id, Principal principal) {
+        User user = userService.deleteAddress(principal.getName(), id);
+        return ResponseEntity.ok(entityMapper.toUserDTO(user));
     }
 }
