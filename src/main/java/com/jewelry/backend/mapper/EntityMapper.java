@@ -35,6 +35,32 @@ public class EntityMapper {
         return dto;
     }
 
+    public Product toProductEntity(ProductDTO dto) {
+        if (dto == null) return null;
+        Product product = new Product();
+        product.setId(dto.getId()); // Usually not set for create, but handled by service if needed
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setCategory(dto.getCategory());
+        product.setStock(dto.getStock());
+        product.setImages(dto.getImages());
+        product.setSpecifications(dto.getSpecifications());
+        product.setOccasions(dto.getOccasions());
+        product.setStyles(dto.getStyles());
+
+        if (dto.getCustomizationOptions() != null) {
+            product.setCustomizationOptions(dto.getCustomizationOptions().stream().map(optDto -> {
+                Product.CustomizationOption opt = new Product.CustomizationOption();
+                opt.setType(optDto.getType());
+                opt.setName(optDto.getName());
+                opt.setPriceModifier(optDto.getPriceModifier());
+                return opt;
+            }).collect(Collectors.toList()));
+        }
+        return product;
+    }
+
     public AddressDTO toAddressDTO(Address address) {
         if (address == null) return null;
         AddressDTO dto = new AddressDTO();

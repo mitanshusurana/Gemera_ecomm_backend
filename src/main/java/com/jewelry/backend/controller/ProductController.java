@@ -79,7 +79,8 @@ public class ProductController {
     // Helper to seed data
     @PostMapping
     @Operation(summary = "Create product (Admin)")
-    public ResponseEntity<ProductDTO> createProduct(@RequestBody Product product) {
+    public ResponseEntity<ProductDTO> createProduct(@RequestBody @jakarta.validation.Valid ProductDTO productDTO) {
+        Product product = entityMapper.toProductEntity(productDTO);
         Product created = productService.createProduct(product);
         return ResponseEntity.status(201).body(entityMapper.toProductDTO(created));
     }

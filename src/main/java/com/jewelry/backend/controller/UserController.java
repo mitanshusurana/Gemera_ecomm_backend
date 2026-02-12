@@ -51,7 +51,7 @@ public class UserController {
 
     @PostMapping("/addresses")
     @Operation(summary = "Add address")
-    public ResponseEntity<UserDTO> addAddress(@RequestBody AddressDTO addressDTO, Principal principal) {
+    public ResponseEntity<UserDTO> addAddress(@RequestBody @jakarta.validation.Valid AddressDTO addressDTO, Principal principal) {
         Address address = entityMapper.toAddressEntity(addressDTO);
         User user = userService.addAddress(principal.getName(), address);
         return ResponseEntity.ok(entityMapper.toUserDTO(user));
