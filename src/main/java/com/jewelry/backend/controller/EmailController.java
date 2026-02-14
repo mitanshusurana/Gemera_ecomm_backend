@@ -1,7 +1,10 @@
 package com.jewelry.backend.controller;
 
+import com.jewelry.backend.dto.EmailNotificationDTO;
+import com.jewelry.backend.dto.EmailTemplateDTO;
 import com.jewelry.backend.entity.EmailNotification;
 import com.jewelry.backend.entity.EmailTemplate;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/email")
@@ -24,25 +28,30 @@ public class EmailController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     @PostMapping("/send")
     @Operation(summary = "Send email notification")
-    public ResponseEntity<EmailNotification> sendEmail(@RequestBody EmailNotification notification) {
-        return ResponseEntity.ok(emailService.sendEmail(notification));
+    public ResponseEntity<EmailNotificationDTO> sendEmail(@RequestBody EmailNotificationDTO notification) {
+        EmailNotification entity = entityMapper.toEmailNotificationEntity(notification);
+        return ResponseEntity.ok(entityMapper.toEmailNotificationDTO(emailService.sendEmail(entity)));
     }
 
     @GetMapping("/notifications/{id}")
     @Operation(summary = "Get notification by ID")
-    public ResponseEntity<EmailNotification> getNotification(@PathVariable UUID id) {
-        return ResponseEntity.ok(emailService.getNotification(id));
+    public ResponseEntity<EmailNotificationDTO> getNotification(@PathVariable UUID id) {
+        return ResponseEntity.ok(entityMapper.toEmailNotificationDTO(emailService.getNotification(id)));
     }
 
     @GetMapping("/notifications")
     @Operation(summary = "Get user notifications")
-    public ResponseEntity<Page<EmailNotification>> getNotifications(
+    public ResponseEntity<Page<EmailNotificationDTO>> getNotifications(
             @RequestParam String email,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(emailService.getUserNotifications(email, PageRequest.of(page, size)));
+        Page<EmailNotification> notifications = emailService.getUserNotifications(email, PageRequest.of(page, size));
+        return ResponseEntity.ok(notifications.map(entityMapper::toEmailNotificationDTO));
     }
 
     @PostMapping("/subscribe")
@@ -61,13 +70,14 @@ public class EmailController {
 
     @GetMapping("/templates/{name}")
     @Operation(summary = "Get email template")
-    public ResponseEntity<EmailTemplate> getTemplate(@PathVariable String name) {
-        return ResponseEntity.ok(emailService.getTemplate(name));
+    public ResponseEntity<EmailTemplateDTO> getTemplate(@PathVariable String name) {
+        return ResponseEntity.ok(entityMapper.toEmailTemplateDTO(emailService.getTemplate(name)));
     }
 
     @GetMapping("/templates")
     @Operation(summary = "Get all templates")
-    public ResponseEntity<List<EmailTemplate>> getAllTemplates() {
-        return ResponseEntity.ok(emailService.getAllTemplates());
+    public ResponseEntity<List<EmailTemplateDTO>> getAllTemplates() {
+        List<EmailTemplate> templates = emailService.getAllTemplates();
+        return ResponseEntity.ok(templates.stream().map(entityMapper::toEmailTemplateDTO).collect(Collectors.toList()));
     }
 }

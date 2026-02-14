@@ -7,6 +7,7 @@ import jakarta.persistence.JoinColumn;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "treasure_chest_accounts")
@@ -20,5 +21,10 @@ public class TreasureChestAccount extends BaseEntity {
     private String status; // e.g., "ACTIVE"
     private String planName;
     private BigDecimal installmentAmount;
-    private BigDecimal currentBalance;
+    private BigDecimal currentBalance; // Maps to balance in DTO
+
+    private int installmentsPaid;
+    private int totalInstallments;
+    private LocalDate startDate;
+    private LocalDate nextDueDate;
 }

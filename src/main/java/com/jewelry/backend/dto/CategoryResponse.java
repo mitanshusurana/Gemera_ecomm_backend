@@ -1,6 +1,5 @@
 package com.jewelry.backend.dto;
 
-import com.jewelry.backend.entity.Category;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import java.util.List;
@@ -8,5 +7,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class CategoryResponse {
-    private List<Category> categories;
+    private List<CategoryDTO> categories;
 }

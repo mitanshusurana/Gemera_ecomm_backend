@@ -4,6 +4,7 @@ import com.jewelry.backend.dto.AuthResponse;
 import com.jewelry.backend.dto.LoginRequest;
 import com.jewelry.backend.dto.RegisterRequest;
 import com.jewelry.backend.entity.User;
+import com.jewelry.backend.mapper.EntityMapper;
 import com.jewelry.backend.repository.UserRepository;
 import com.jewelry.backend.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class AuthService {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Autowired
+    EntityMapper entityMapper;
+
     public AuthResponse register(RegisterRequest registerRequest) {
         if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
             throw new RuntimeException("Error: Email is already in use!");
@@ -49,7 +53,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(registerRequest.getEmail(), registerRequest.getPassword()));
 
         String jwt = jwtUtils.generateJwtToken(authentication);
-        return new AuthResponse(jwt, savedUser);
+        return new AuthResponse(jwt, entityMapper.toUserDTO(savedUser));
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
@@ -60,7 +64,7 @@ public class AuthService {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
-        return new AuthResponse(jwt, user);
+        return new AuthResponse(jwt, entityMapper.toUserDTO(user));
     }
 
     public AuthResponse refreshToken(String refreshToken) {
@@ -68,7 +72,7 @@ public class AuthService {
             String email = jwtUtils.getUserNameFromJwtToken(refreshToken);
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
             String newToken = jwtUtils.generateTokenFromEmail(email);
-            return new AuthResponse(newToken, user);
+            return new AuthResponse(newToken, entityMapper.toUserDTO(user));
         }
         throw new RuntimeException("Invalid Refresh Token");
     }

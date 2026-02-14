@@ -1,6 +1,7 @@
 package com.jewelry.backend.service;
 
 import com.jewelry.backend.dto.TreasureEnrollRequest;
+import com.jewelry.backend.dto.TreasurePlanConfigDTO;
 import com.jewelry.backend.entity.TreasureChestAccount;
 import com.jewelry.backend.entity.User;
 import com.jewelry.backend.repository.TreasureChestAccountRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 public class TreasurePlanService {
@@ -19,6 +21,15 @@ public class TreasurePlanService {
 
     @Autowired
     UserRepository userRepository;
+
+    public TreasurePlanConfigDTO getConfig() {
+        TreasurePlanConfigDTO config = new TreasurePlanConfigDTO();
+        config.setMinAmount(new BigDecimal("1000"));
+        config.setMaxAmount(new BigDecimal("100000"));
+        config.setDurationMonths(11);
+        config.setBonusMonths(1);
+        return config;
+    }
 
     public TreasureChestAccount getAccount(String userEmail) {
         User user = userRepository.findByEmail(userEmail).orElseThrow();
@@ -40,6 +51,10 @@ public class TreasurePlanService {
         account.setInstallmentAmount(request.getInstallmentAmount());
         account.setCurrentBalance(BigDecimal.ZERO);
         account.setStatus("ACTIVE");
+        account.setStartDate(LocalDate.now());
+        account.setInstallmentsPaid(0);
+        account.setTotalInstallments(12); // Assume 12 for now
+        account.setNextDueDate(LocalDate.now().plusMonths(1));
 
         return treasureChestAccountRepository.save(account);
     }
